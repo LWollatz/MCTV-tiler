@@ -2,6 +2,8 @@
 import json
 
 def openjson(filename):
+    """opens the json file "filename" and
+    returns a python object with the content of that file"""
     f1 = open(filename,"r")
     lines = f1.readlines()
     f1.close()
@@ -10,7 +12,17 @@ def openjson(filename):
     return jsn
 
 def newjson(dic):
-    #height,width,densmin,densmax,res,zres,resunit
+    """takes a dictionary and returns a json object with the main
+    MCTV things defined.
+    The dictionary contains:
+    "height" (REQUIRED)    height of the images
+    "width"  (REQUIRED)    width of the images
+    "densmin" (optional)   density value of minimum pixel value
+    "densmax" (optional)   density value of maximum pixel value
+    "res" (optional)       resolution per pixel in-plane
+    "zres" (optional)      resolution per pixel inter-planes
+    "resunits" (optional)  units of the resolution (defaults to micro-meter)
+"""
     jsn = {"height":dic["height"],"width":dic["width"],"slides":[]}
     if "densmin" in dic:
         jsn["densmin"] = dic["densmin"]
@@ -26,6 +38,8 @@ def newjson(dic):
 
 
 def addslide(jsn,path,jid=0,height=0,width=0):
+    """add a slide to the jsonInfo.txt replacing the job-id specified
+    or sorting it by name, returning the json object with the added slide"""
     if width == 0:
         width = jsn["width"]
     if height == 0:
@@ -65,6 +79,7 @@ def addslide(jsn,path,jid=0,height=0,width=0):
     return jsn
 
 def addid(jsn,jid,path=None):
+    """add slide with job-id"""
     width = jsn["width"]
     height = jsn["height"]
     if path != None:
@@ -79,6 +94,7 @@ def addid(jsn,jid,path=None):
 
 
 def writejson(filename,jsn):
+    """write json object to file"""
     f1 = open(filename,"w")
     f1.write(json.dumps(jsn, indent=4, separators=(',', ': ')))
     f1.close()

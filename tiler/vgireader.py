@@ -18,6 +18,16 @@ def vgiFromFolder(path):
     return filelist
 
 def readRAW(fin,start,length,bits,ntype,width,height):
+    """
+    fin          string  filepath to read
+    start        integer  first byte to read
+    length       long  number of pixel to read
+    bits         integer  number of bits per pixel/voxel
+    ntype        string  n[umber]type string for converting the bytes into
+                         numbers
+    width        integer  image width
+    height       integer  image height
+    """
     start = int(start)
     length = int(length)
     bits = int(bits)
