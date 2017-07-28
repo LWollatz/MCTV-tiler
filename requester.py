@@ -34,16 +34,18 @@ if __name__ == "__main__":
 ##
 if True:
     ###print time()
+    print sys.argv
     for arg in sys.argv:
-        if arg.startswith("-"):
+        if (arg.startswith("-") and len(arg) == 2) or arg == "--help":
             if curval == "":
                 argdic[curkey] = True
             else:
-                argdic[curkey] = curval
+                argdic[curkey] = curval.lstrip(" ").rstrip(" ")
             curval = ""
             curkey = arg
         else:
-            curval = arg
+            curval += ' ' + arg
+            curval = curval.lstrip(' ')
     if curkey != "":
         if curval == "":
             argdic[curkey] = True
@@ -66,5 +68,6 @@ if True:
         #print inspect("scheduled")
         #print app.control.inspect().reserved()
         #jobvar = readdir.delay(argdic["-f"])
+        print argdic["-i"], "'"+argdic["-f"]+"'"
         jobvar = readdir.apply_async([argdic["-f"]]) #,priority=1)
         print "job submitted"

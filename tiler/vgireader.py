@@ -17,6 +17,19 @@ def vgiFromFolder(path):
             logging.debug("ignore " + fileName + " " + fileEnding)
     return filelist
 
+def stlFromFolder(path):
+    filelist = []
+    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path,f))]
+    for fileName in files:
+        a = fileName.rindex(".")
+        fileEnding = fileName[a+1:]
+        if fileEnding in ["stl"]:
+            filelist.append(fileName)
+            logging.debug("choose " + fileName)
+        else:
+            logging.debug("ignore " + fileName + " " + fileEnding)
+    return filelist
+
 def readRAW(fin,start,length,bits,ntype,width,height):
     """
     fin          string  filepath to read
@@ -39,7 +52,7 @@ def readRAW(fin,start,length,bits,ntype,width,height):
     pixels = unpack(str(int(length*8/bits))+ntype,pixels)
     pixels = np.array(pixels)
     #print len(pixels), width, height
-    return pixels.reshape((width,height))
+    return pixels.reshape((height,width))
 
 def getRandomValFromRAW(fin,bits,ntype,length,count):
     """

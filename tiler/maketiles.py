@@ -51,7 +51,9 @@ def maketilesImage(filepath,minval,maxval,ftype="image",rawdata={"snum":"0001","
     - "length"   long  number of pixel to read
     - "bits"     integer  number of bits per pixel/voxel
     - "ntype"    string  n[umber]type string for converting the bytes into
-                         numbers 
+                         numbers
+    - "width"
+    - "height"
     """
     verbose=False
     # open the image passed
@@ -60,6 +62,7 @@ def maketilesImage(filepath,minval,maxval,ftype="image",rawdata={"snum":"0001","
         imarray = readRAW(filepath,rawdata["start"],rawdata["length"],rawdata["bits"],rawdata["ntype"],rawdata["width"],rawdata["height"])
         imarray = flt(imarray)
         maxX,maxY = int(rawdata["width"]),int(rawdata["height"])
+        outpath = getoutpath(filepath,ftype,rawdata["snum"])
     else:
         img = Image.open(filepath)
         if img.mode == "F;32BF":
@@ -67,8 +70,7 @@ def maketilesImage(filepath,minval,maxval,ftype="image",rawdata={"snum":"0001","
         logging.debug("attempt succesful")
         imarray = flt(np.array(img))
         maxX,maxY = img.size
-    # get image information
-    outpath = getoutpath(filepath,ftype,rawdata["snum"])
+        outpath = getoutpath(filepath,ftype)
     if not os.path.exists(outpath):
         os.makedirs(outpath)
     
@@ -203,10 +205,10 @@ def initiateThumbnails(filepath,imgcount,imsize):
     thumbnail so taht individual parts of the image can be added later"""
     width = int(imsize)
     height = int(imgcount)
-    while width > 255:
+    while width > 256:
         width = width/2
         height = height/2
-    imarray = np.zeros((int(height),int(width)))
+    imarray = np.zeros((int(height)+1,int(width)))
     img = Image.fromarray(imarray)
     img = img.convert("RGB")
     fout = open(filepath,"wb")
@@ -222,6 +224,7 @@ def addtoThumbnail(filepath,imgcount,imgtotal,stripe):
     imarray = np.array(img)
     maxX,maxY = img.size
     posY = int(maxY*imgcount/imgtotal)
+    #TODO: fix issue if not all images have the same size...
     imarray[posY][:][:] = np.array(stripe)[0][:][:]
     img = Image.fromarray(imarray)
     fout = open(filepath,"wb")

@@ -17,8 +17,9 @@ def newjson(dic):
     The dictionary contains:
     "height" (REQUIRED)    height of the images
     "width"  (REQUIRED)    width of the images
-    "densmin" (optional)   density value of minimum pixel value
-    "densmax" (optional)   density value of maximum pixel value
+    "densmin" (optional)   density value of minimum pixel value (defaults to 0)
+    "densmax" (optional)   density value of maximum pixel value (defaults to 255)
+    "densunit" (optional)  unit of density values (defaults to 8-bit)
     "res" (optional)       resolution per pixel in-plane
     "zres" (optional)      resolution per pixel inter-planes
     "resunits" (optional)  units of the resolution (defaults to micro-meter)
@@ -26,14 +27,28 @@ def newjson(dic):
     jsn = {"height":dic["height"],"width":dic["width"],"slides":[]}
     if "densmin" in dic:
         jsn["densmin"] = dic["densmin"]
+    else:
+        jsn["densmin"] = 0
     if "densmax" in dic:
         jsn["densmax"] = dic["densmax"]
+    else:
+        jsn["densmax"] = 255
+    if "densunit" in dic:
+        jsn["densunit"] = dic["densunit"]
+    else:
+        jsn["densunit"] = "8-bit"
     if "res" in dic:
         jsn["res"] = dic["res"]
+    else:
+        jsn["res"] = 1
     if "zres" in dic:
         jsn["zres"] = dic["zres"]
+    else:
+        jsn["zres"] = 1
     if "resunits" in dic:
         jsn["resunits"] = dic["resunits"]
+    else:
+        jsn["resunits"] = "px"
     return jsn
 
 

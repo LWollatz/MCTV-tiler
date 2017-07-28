@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from .jsonhandler import *
 from .maketiles import *
 from .vgireader import *
+import ctypes
 import logging
 
 logger = get_task_logger(__name__)
@@ -32,19 +33,26 @@ def tile(image,directory,sliceNum,imgtotal,minval,maxval,ftype="image",rawdata={
 
 @app.task(ignore_result=True)
 def readdir(directory):
+    #files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path,f))]
+    #TODO: more efficient to pass list of files instead of path?
     images = imgFromFolder(path = directory)
-    if len(images) < 1:
-        logging.info("No images found - looking for vgi header file instead.")
-        headers = vgiFromFolder(path = directory)
-        if len(headers) > 1:
-            logging.info("Multiple headers found - choosing first header by default.")
-        if len(headers) < 1:
-            logging.warn("No images and no vgi header found - no preview will be created!")
+    headers = vgiFromFolder(path = directory)
+    surfaces = stlFromFolder(path = directory)
+    if len(headers) > 1:
+        logging.info("Multiple headers found - choosing first header by default.")
+    if len(headers) < 1:
+        logging.info("No vgi header found.")
+        if len(images) > 1:
+            logging.info("found %d images - extracting properties.",len(images))
+            _readdirSTACK(directory,images)
+        elif len(surfaces) >= 1:
+            logging.info("found %d surface files - saving.",len(surfaces))
+            _readdirSTL(directory,surfaces)
         else:
-            _readdirRAW(directory,headers)
+            logging.warn("No image data found - no preview will be created!")
     else:
-        logging.info("found %d images - extracting properties.",len(images))
-        _readdirSTACK(directory,images)
+        _readdirRAW(directory,headers)
+    
     return None
 
 def _remoldjobs(jsndir):
@@ -58,6 +66,27 @@ def _remoldjobs(jsndir):
                 logging.info("removing old tiler job %s",jid)
                 app.control.revoke(jid)
                 #app.control.terminate(jid)
+    return None
+
+def _ensurePreviews(directory):
+    fullpath = directory+"\\.previews"
+    if not os.path.exists(fullpath):
+        os.makedirs(fullpath)
+    suc = ctypes.windll.kernel32.SetFileAttributesW(fullpath,0x02)
+    if not suc:
+        logging.error(ctypes.WinError())
+    return None
+
+def _readdirSTL(directory,files):
+    _ensurePreviews(directory)
+    infodir = directory+"\\.previews\\infoSTL.txt"
+    #create list of images
+    fout = open(infodir,"w")
+    for f in files:
+        logging.debug("%s",f)
+        fout.write(f+"\n")
+    fout.close()
+    logging.info("List of all STLs created.")
     return None
 
 def _readdirRAW(directory,headers):
@@ -74,8 +103,7 @@ def _readdirRAW(directory,headers):
     unit = vgidata["scene"]["resolution"]["unit"]
     logging.warn("minval: " + str(minval) + ", maxval: " + str(maxval))
     #remove old jobs
-    if not os.path.exists(directory+"\\.previews"):
-        os.makedirs(directory+"\\.previews")
+    _ensurePreviews(directory)
     jsndir = directory+"\\.previews\\infoJSON.txt"
     _remoldjobs(jsndir)
     #determine value range of interest
@@ -100,7 +128,7 @@ def _readdirRAW(directory,headers):
     minval,maxval = MajRange(sample,0.99)
     logging.warn("99% minval: " + str(minval) + ", maxval: " + str(maxval))
     #create json header
-    jsn = newjson({"width":width, "height":height, "res":res, "zres":zres, "resunits":unit, "densmin":minval, "densmax":maxval})
+    jsn = newjson({"width":width, "height":height, "res":res, "zres":zres, "resunits":unit, "densmin":minval, "densmax":maxval, "densunit":str(int(bits))+"-bits"})
     writejson(jsndir,jsn)
     logging.info("JSON file created - starting image tiling.")
     #initiate Thumbnail
@@ -136,11 +164,10 @@ def _readdirSTACK(directory,images):
     logging.debug("minval: " + str(minval) + ", maxval: " + str(maxval))
     #check for old jobs
     jsndir = directory+"\\.previews\\infoJSON.txt"
-    remoldjobs(jsndir)
+    _remoldjobs(jsndir)
     #creating new json
     jsn = newjson({"width":images[0]["Width"], "height":images[0]["Height"]})
-    if not os.path.exists(directory+"\\.previews"):
-        os.makedirs(directory+"\\.previews")
+    _ensurePreviews(directory)
     writejson(jsndir,jsn)
     #initiate Thumbnail
     initiateThumbnails(directory+"\\.previews\\tc.jpg",len(images),images[0]["Width"])
