@@ -56,16 +56,18 @@ def readdir(directory):
     return None
 
 def _remoldjobs(jsndir):
-    logging.warn("checking for %s",jsndir)
-    if os.path.isfile(jsndir):
-        logging.warn("checking for old jobs in %s",jsndir)
-        jsn = openjson(jsndir)
-        for s in jsn["slides"]:
-            if "jobid" in s.keys():
-                jid = s["jobid"]
-                logging.info("removing old tiler job %s",jid)
-                app.control.revoke(jid)
-                #app.control.terminate(jid)
+    """reads job ids from json and removes the jobs from the queue"""
+    if !os.path.isfile(jsndir):
+        logging.warn("%s was not found",jsndir)
+        return None
+    logging.info("checking for old jobs in %s",jsndir)
+    jsn = openjson(jsndir)
+    for s in jsn["slides"]:
+        if "jobid" in s.keys():
+            jid = s["jobid"]
+            logging.info("removing old tiler job %s",jid)
+            app.control.revoke(jid)
+            #app.control.terminate(jid)
     return None
 
 def _ensurePreviews(directory):
@@ -89,6 +91,23 @@ def _readdirSTL(directory,files):
     logging.info("List of all STLs created.")
     return None
 
+def _mapNtype(ntype):
+    if ntype == "float":
+        ntype = "f"
+    elif ntype == "double":
+        ntype = "d"
+    elif ntype == "int":
+        ntype = "i"
+    elif ntype == "unsigned int":
+        ntype = "I"
+    elif ntype == "short":
+        ntype = "h"
+    elif ntype == "unsigned short":
+        ntype = "H"
+    else:
+        ntype = ntype[0]
+    return ntype
+
 def _readdirRAW(directory,headers):
     #read header file
     header = headers[0]
@@ -108,20 +127,7 @@ def _readdirRAW(directory,headers):
     _remoldjobs(jsndir)
     #determine value range of interest
     ntype = vgidata["volume1"]["representation"]["datatype"]
-    if ntype == "float":
-        ntype = "f"
-    elif ntype == "double":
-        ntype = "d"
-    elif ntype == "int":
-        ntype = "i"
-    elif ntype == "unsigned int":
-        ntype = "I"
-    elif ntype == "short":
-        ntype = "h"
-    elif ntype == "unsigned short":
-        ntype = "H"
-    else:
-        ntype = ntype[0]
+    ntype = _mapNtype(ntype)
     voxel = width*height*numSlices
     totsize = voxel*bits
     sample = getRandomValFromRAW(directory+"\\"+filename,bits,ntype,voxel,10000)

@@ -104,8 +104,7 @@ def maketilesImage(filepath,minval,maxval,ftype="image",rawdata={"snum":"0001","
                 y2 = y+ys;
                 if (y2 >= maxY):
                         ys = maxY - 1 - y
-                if verbose:
-                    print(x, y, xs, ys, maxX, maxY)
+                logging.debug("x: %d, y: %d, xs: %d, ys: %d, maxX: %d, maxY: %d", x, y, xs, ys, maxX, maxY)
                 tim = img.convert("RGB")
                 tim = tim.crop((x, y, x+xs, y+ys))
     # save the tiles
@@ -122,11 +121,7 @@ def maketilesImage(filepath,minval,maxval,ftype="image",rawdata={"snum":"0001","
         maxX,maxY = img.size
     return outpath, centrestrip
 
-
-def imgFromFolder(path):
-    """get all image files in a folder (not including sub-directories)"""
-    filelist = []
-    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path,f))]
+def imgFromFiles(files):
     for fileName in files:
         a = fileName.rindex(".")
         fileEnding = fileName[a+1:]
@@ -137,18 +132,17 @@ def imgFromFolder(path):
             logging.debug("ignore " + fileName + " " + fileEnding)
     return filelist
 
+def imgFromFolder(path):
+    """get all image files in a folder (not including sub-directories)"""
+    filelist = []
+    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path,f))]
+    return imgFromFiles(files)
+
 def imgFromPath(path):
     """get all image files on a path (including sub-directories)"""
     filelist = []
     for root, dirs, files in os.walk(path):
-        for fileName in files:
-            a = fileName.rindex(".")
-            fileEnding = fileName[a+1:]
-            if fileEnding in ["tif","jpg","png","tiff"]:
-                filelist.append(fileName)
-                logging.debug("choose " + fileName)
-            else:
-                logging.debug("ignore " + fileName + " " + fileEnding)
+        filelist = filelist + imgFromFiles(files)
     return filelist
 
 def propertiesFromImg(filepath):
